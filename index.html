@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Finanzas 70/20/10">
+    <title>Dashboard Financiero 70/20/10 | Benjamín Lara Lara - Octubre 2026</title>
+    <!-- Icono App Móvil (SVG embebido) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f172a'/%3E%3Ctext x='50' y='64' font-family='Arial,sans-serif' font-size='44' font-weight='bold' fill='%2310b981' text-anchor='middle'%3E70%3C/text%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f172a'/%3E%3Ctext x='50' y='64' font-family='Arial,sans-serif' font-size='44' font-weight='bold' fill='%2310b981' text-anchor='middle'%3E70%3C/text%3E%3C/svg%3E">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS (Exportación Excel .xlsx con fórmulas reales) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        navy: {
+                            800: '#1e293b',
+                            900: '#0f172a',
+                            950: '#020617',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        /* Ocultar flechas en inputs numéricos */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+        .transition-width {
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-emerald-100 selection:text-emerald-900">
+
+    <!-- Notificación Toast (Sin alert()) -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Barra de Navegación Superior -->
+    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-30 border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="bg-emerald-500/20 border border-emerald-400/30 p-2.5 rounded-xl text-emerald-400">
+                        <i data-lucide="wallet" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-lg sm:text-xl font-bold tracking-tight">Planificador Libertad Financiera</h1>
+                            <span class="bg-emerald-500/20 text-emerald-300 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-emerald-500/30">70 / 20 / 10</span>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-400">
+                            Titular: <span class="text-slate-200 font-medium">Benjamín Benoni Lara Lara</span> • Periodo: <span class="text-amber-400 font-medium">Octubre 2026</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción Rápida -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="exportExcel()" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition cursor-pointer">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                        Exportar Excel (.xlsx)
+                    </button>
+                    <button onclick="exportJSON()" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer">
+                        <i data-lucide="download" class="w-4 h-4 text-sky-400"></i>
+                        Respaldo JSON
+                    </button>
+                    <label class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer" title="Restaurar respaldo JSON">
+                        <i data-lucide="upload" class="w-4 h-4 text-amber-400"></i>
+                        <span class="hidden sm:inline">Importar</span>
+                        <input type="file" accept=".json" onchange="importJSON(event)" class="hidden">
+                    </label>
+                    <button onclick="openResetModal()" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-800/60 transition cursor-pointer">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Reiniciar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
+
+        <!-- 1. TARJETAS KPI SUPERIORES -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+            <!-- KPI 1: Ingreso Líquido Total -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex flex-col justify-between relative overflow-hidden">
+                <div class="absolute right-0 top-0 w-24 h-24 bg-slate-900/5 rounded-bl-full -mr-4 -mt-4"></div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Ingreso Líquido Total</span>
+                    <div class="p-2 bg-slate-100 text-slate-800 rounded-xl">
+                        <i data-lucide="banknote" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div>
+                    <div id="kpi-total-income" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">$1.503.736</div>
+                    <p id="kpi-income-count" class="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                        2 liquidaciones depositadas
+                    </p>
+                </div>
+            </div>
+
+            <!-- KPI 2: Total Egresos Registrados -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex flex-col justify-between relative overflow-hidden">
+                <div class="absolute right-0 top-0 w-24 h-24 bg-amber-500/5 rounded-bl-full -mr-4 -mt-4"></div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Egresos Asignados</span>
+                    <div class="p-2 bg-amber-50 text-amber-600 rounded-xl">
+                        <i data-lucide="receipt" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div>
+                    <div id="kpi-total-expenses" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">$0</div>
+                    <p id="kpi-expenses-pct" class="text-xs text-slate-500 mt-1">
+                        0,0% del ingreso total ejecutado
+                    </p>
+                </div>
+            </div>
+
+            <!-- KPI 3: Saldo Disponible / Remanente -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex flex-col justify-between relative overflow-hidden">
+                <div class="absolute right-0 top-0 w-24 h-24 bg-emerald-500/5 rounded-bl-full -mr-4 -mt-4"></div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Saldo por Asignar</span>
+                    <div class="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                        <i data-lucide="piggy-bank" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div>
+                    <div id="kpi-remaining" class="text-2xl sm:text-3xl font-extrabold text-emerald-600 tracking-tight">$1.503.736</div>
+                    <p id="kpi-remaining-sub" class="text-xs text-slate-500 mt-1">
+                        Disponible en cuentas bancarias
+                    </p>
+                </div>
+            </div>
+
+            <!-- KPI 4: Estado Regla 70/20/10 -->
+            <div id="kpi-rule-card" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex flex-col justify-between relative overflow-hidden">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Estado Regla 70/20/10</span>
+                    <div id="kpi-rule-icon-bg" class="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                        <i data-lucide="shield-check" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div>
+                    <div id="kpi-rule-status" class="text-lg sm:text-xl font-bold text-emerald-700 leading-snug">Presupuesto Saludable</div>
+                    <p id="kpi-rule-desc" class="text-xs text-slate-500 mt-1">
+                        Todos los cubos dentro de su límite
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. PANEL DE REGLA 70 / 20 / 10 (PROGRESO EN TIEMPO REAL) -->
+        <section class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/80">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <i data-lucide="target" class="w-5 h-5 text-emerald-600"></i>
+                        Distribución Estratégica 70 / 20 / 10
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-500">Metas calculadas automáticamente sobre el ingreso líquido total vigente.</p>
+                </div>
+                <div class="flex items-center gap-3 text-xs font-medium">
+                    <span class="flex items-center gap-1.5 text-slate-600"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Óptimo (&lt;90%)</span>
+                    <span class="flex items-center gap-1.5 text-slate-600"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>Alerta (90-100%)</span>
+                    <span class="flex items-center gap-1.5 text-slate-600"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>Excedido (&gt;100%)</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <!-- CUBO 70%: GASTOS FIJOS / NECESIDADES -->
+                <div class="rounded-2xl border border-slate-200 p-4 sm:p-5 bg-slate-50/50 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-slate-900 text-white">
+                                70% Gastos Fijos
+                            </span>
+                            <span id="badge-70" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">0% usado</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-4">Cuentas básicas, hogar, alimentación, bancos y compromisos esenciales.</p>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-baseline mb-1.5">
+                            <div>
+                                <span class="text-xs text-slate-500 block">Ejecutado</span>
+                                <span id="spent-70" class="text-lg font-bold text-slate-900">$0</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs text-slate-500 block">Tope Máximo (70%)</span>
+                                <span id="budget-70" class="text-sm font-semibold text-slate-700">$1.052.615</span>
+                            </div>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                            <div id="bar-70" class="bg-emerald-500 h-3 rounded-full transition-width" style="width: 0%"></div>
+                        </div>
+                        <div class="flex justify-between items-center mt-2 text-xs">
+                            <span id="diff-70" class="text-slate-600 font-medium">Disponible: $1.052.615</span>
+                            <button onclick="quickAddPreset('Gustos')" class="hidden"></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CUBO 20%: GUSTOS / ESTILO DE VIDA -->
+                <div class="rounded-2xl border border-slate-200 p-4 sm:p-5 bg-slate-50/50 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-amber-500 text-white">
+                                20% Gustos
+                            </span>
+                            <span id="badge-20" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">0% usado</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-4">Salidas, restaurantes, entretenimiento, compras personales y ocio sin culpa.</p>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-baseline mb-1.5">
+                            <div>
+                                <span class="text-xs text-slate-500 block">Ejecutado</span>
+                                <span id="spent-20" class="text-lg font-bold text-slate-900">$0</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs text-slate-500 block">Tope Máximo (20%)</span>
+                                <span id="budget-20" class="text-sm font-semibold text-slate-700">$300.747</span>
+                            </div>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                            <div id="bar-20" class="bg-emerald-500 h-3 rounded-full transition-width" style="width: 0%"></div>
+                        </div>
+                        <div class="flex justify-between items-center mt-2 text-xs">
+                            <span id="diff-20" class="text-slate-600 font-medium">Disponible: $300.747</span>
+                            <button onclick="quickFocusAdd('20')" class="text-amber-700 hover:text-amber-800 font-semibold underline cursor-pointer">+ Agregar gusto</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CUBO 10%: INVERSIÓN / LIBERTAD FINANCIERA -->
+                <div class="rounded-2xl border border-emerald-200/80 p-4 sm:p-5 bg-emerald-50/30 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-emerald-600 text-white">
+                                10% Inversión
+                            </span>
+                            <span id="badge-10" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-700">0% logrado</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-4">Ahorro sistemático, APV, Fondos Mutuos, ETF, Depósitos a Plazo o Fondo Emergencia.</p>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-baseline mb-1.5">
+                            <div>
+                                <span class="text-xs text-slate-500 block">Invertido / Ahorrado</span>
+                                <span id="spent-10" class="text-lg font-bold text-emerald-700">$0</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs text-slate-500 block">Meta Mínima (10%)</span>
+                                <span id="budget-10" class="text-sm font-semibold text-slate-700">$150.374</span>
+                            </div>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                            <div id="bar-10" class="bg-emerald-500 h-3 rounded-full transition-width" style="width: 0%"></div>
+                        </div>
+                        <div class="flex justify-between items-center mt-2 text-xs">
+                            <span id="diff-10" class="text-emerald-700 font-medium">Falta para meta: $150.374</span>
+                            <button onclick="quickFocusAdd('10')" class="text-emerald-700 hover:text-emerald-800 font-semibold underline cursor-pointer">+ Registrar inversión</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. SECCIÓN PRINCIPAL: GESTOR DE EGRESOS/CUENTAS + GRÁFICOS -->
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+
+            <!-- COLUMNA IZQUIERDA (7 cols): TABLA INTERACTIVA PARA RELLENAR CUENTAS Y EGRESOS -->
+            <section class="xl:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-200/80 flex flex-col">
+                <div class="p-5 sm:p-6 border-b border-slate-100">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                <i data-lucide="list-checks" class="w-5 h-5 text-slate-800"></i>
+                                Planilla de Cuentas y Egresos (Octubre 2026)
+                            </h2>
+                            <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+                                Haz clic en cualquier monto para rellenar tus cuentas en vivo o agrega nuevos movimientos.
+                            </p>
+                        </div>
+                        <!-- Filtro por Cubo -->
+                        <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl self-start">
+                            <button onclick="setFilter('ALL')" id="filter-ALL" class="filter-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-white text-slate-900 shadow-sm cursor-pointer">Todos</button>
+                            <button onclick="setFilter('70')" id="filter-70" class="filter-btn px-2.5 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 cursor-pointer">70% Fijos</button>
+                            <button onclick="setFilter('20')" id="filter-20" class="filter-btn px-2.5 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 cursor-pointer">20% Gustos</button>
+                            <button onclick="setFilter('10')" id="filter-10" class="filter-btn px-2.5 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 cursor-pointer">10% Inv.</button>
+                        </div>
+                    </div>
+
+                    <!-- Formulario Rápido para Agregar Nuevo Egreso / Gusto / Inversión -->
+                    <form id="add-expense-form" onsubmit="handleAddExpense(event)" class="mt-5 bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
+                        <div class="sm:col-span-4">
+                            <label class="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Concepto / Cuenta</label>
+                            <input type="text" id="new-exp-name" required placeholder="Ej: Cine, APV, Arriendo..." class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-800">
+                        </div>
+                        <div class="sm:col-span-3">
+                            <label class="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Regla 70/20/10</label>
+                            <select id="new-exp-bucket" class="w-full px-2.5 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-800">
+                                <option value="70">70% Gastos Fijos</option>
+                                <option value="20">20% Gustos</option>
+                                <option value="10">10% Inversión</option>
+                            </select>
+                        </div>
+                        <div class="sm:col-span-3">
+                            <label class="block text-[11px] font-semibold text-slate-600 uppercase mb-1">Monto (CLP)</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-2 text-sm text-slate-400 font-medium">$</span>
+                                <input type="text" inputmode="numeric" id="new-exp-amount" required placeholder="0"
+                                    oninput="formatMoneyInput(this)"
+                                    class="w-full pl-7 pr-3 py-2 text-sm font-semibold bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-800">
+                            </div>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <button type="submit" class="w-full py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-xl transition flex items-center justify-center gap-1 cursor-pointer shadow-sm">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                Agregar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tabla Editable de Cuentas y Egresos -->
+                <div class="overflow-x-auto flex-1">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                                <th class="py-3 px-4">Cuenta / Ítem</th>
+                                <th class="py-3 px-3">Clasificación</th>
+                                <th class="py-3 px-3">Cuenta Origen</th>
+                                <th class="py-3 px-4 text-right">Monto (CLP)</th>
+                                <th class="py-3 px-3 text-center w-12">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expenses-table-body" class="divide-y divide-slate-100 text-sm">
+                            <!-- Renderizado dinámicamente por JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pie de Tabla con Totales -->
+                <div class="p-4 sm:px-6 bg-slate-50 border-t border-slate-200 rounded-b-2xl flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="quickAddPreset('Gusto: Salida / Restaurante', '20')" class="text-xs px-2.5 py-1.5 rounded-lg bg-amber-100/80 hover:bg-amber-200/80 text-amber-900 font-medium transition cursor-pointer">
+                            + Gusto Rápido (20%)
+                        </button>
+                        <button type="button" onclick="quickAddPreset('Inversión: Ahorro / ETF', '10')" class="text-xs px-2.5 py-1.5 rounded-lg bg-emerald-100/80 hover:bg-emerald-200/80 text-emerald-900 font-medium transition cursor-pointer">
+                            + Inversión Rápida (10%)
+                        </button>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs text-slate-500 mr-2">Total Egresos Filtrados:</span>
+                        <span id="table-subtotal" class="text-base font-extrabold text-slate-900">$0</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- COLUMNA DERECHA (5 cols): VISUALIZACIONES GRÁFICAS -->
+            <section class="xl:col-span-5 space-y-6">
+                <!-- Gráfico 1: Dona de Distribución del Ingreso -->
+                <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/80">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Distribución Real del Ingreso</h3>
+                            <p class="text-xs text-slate-500">Egresos ejecutados vs. Saldo sin asignar</p>
+                        </div>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700">CLP</span>
+                    </div>
+                    <div class="relative h-64 w-full flex items-center justify-center">
+                        <canvas id="donutChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico 2: Barras Comparativas Meta 70/20/10 vs Ejecutado -->
+                <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/80">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Meta 70/20/10 vs. Ejecutado</h3>
+                            <p class="text-xs text-slate-500">Comparación presupuestaria por cubo financiero</p>
+                        </div>
+                    </div>
+                    <div class="relative h-64 w-full">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- 4. MÓDULO DE INGRESOS Y LIQUIDACIONES DE SUELDO (OCTUBRE 2026) -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+            <div class="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-lg font-bold text-slate-900">Detalle de Liquidaciones de Sueldo — Octubre 2026</h2>
+                        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-900 text-white">UF: $41.247,63</span>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+                        Ingresos precargados desde tus documentos oficiales. Puedes editar montos o agregar ingresos extras (bonos, boletas, etc.).
+                    </p>
+                </div>
+                <button onclick="toggleNewIncomeForm()" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition self-start sm:self-auto cursor-pointer shadow-sm">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    Agregar Ingreso Extra
+                </button>
+            </div>
+
+            <!-- Formulario Oculto para Agregar Ingreso Adicional -->
+            <div id="new-income-panel" class="hidden bg-emerald-50/60 border-b border-emerald-100 p-4 sm:px-6">
+                <form onsubmit="handleAddIncome(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                    <div class="sm:col-span-4">
+                        <label class="block text-[11px] font-semibold text-slate-700 uppercase mb-1">Empleador / Fuente</label>
+                        <input type="text" id="inc-source" required placeholder="Ej: Honorarios / Bono" class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-xl">
+                    </div>
+                    <div class="sm:col-span-4">
+                        <label class="block text-[11px] font-semibold text-slate-700 uppercase mb-1">Banco / Cuenta Destino</label>
+                        <input type="text" id="inc-bank" required placeholder="Ej: Banco Falabella Cta. Cte." class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-xl">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-[11px] font-semibold text-slate-700 uppercase mb-1">Sueldo Líquido ($)</label>
+                        <input type="text" inputmode="numeric" id="inc-liquid" required placeholder="0"
+                            oninput="formatMoneyInput(this)"
+                            class="w-full px-3 py-2 text-sm font-semibold bg-white border border-slate-300 rounded-xl">
+                    </div>
+                    <div class="sm:col-span-2 flex gap-2">
+                        <button type="submit" class="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl cursor-pointer">Guardar</button>
+                        <button type="button" onclick="toggleNewIncomeForm()" class="py-2 px-2.5 bg-white border border-slate-300 text-slate-600 text-xs font-semibold rounded-xl cursor-pointer">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tarjetas de Liquidaciones -->
+            <div id="incomes-grid" class="p-5 sm:p-6 grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <!-- Renderizado dinámicamente por JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-xs text-slate-400 border-t border-slate-200/70 mt-8">
+        Dashboard de Gestión Financiera Personal • Datos almacenados localmente en tu navegador (localStorage) • Benjamín Lara Lara — Octubre 2026.
+    </footer>
+
+    <!-- Modal de Confirmación para Reiniciar Datos (Reemplaza confirm()) -->
+    <div id="reset-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+            <div class="flex items-center gap-3 text-rose-600 mb-3">
+                <div class="p-2.5 bg-rose-100 rounded-xl">
+                    <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">¿Reiniciar planilla de Octubre 2026?</h3>
+            </div>
+            <p class="text-sm text-slate-600 mb-6">
+                Esta acción restaurará tus dos liquidaciones originales ($1.503.736) y volverá las cuentas precargadas a <strong>$0</strong>, eliminando los movimientos personalizados.
+            </p>
+            <div class="flex justify-end gap-2.5">
+                <button onclick="closeResetModal()" class="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
+                    Cancelar
+                </button>
+                <button onclick="confirmResetData()" class="px-4 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition cursor-pointer">
+                    Sí, reiniciar valores
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. ESTADO INICIAL Y DATOS DE LIQUIDACIONES
+        // ==========================================
+        const STORAGE_KEY = 'benjamin_finanzas_oct2026_v1';
+
+        const DEFAULT_STATE = {
+            incomes: [
+                {
+                    id: 'liq-1',
+                    company: 'ASOCIACIÓN GREMIAL DE BUSES INTERCOMUNAL',
+                    rutCompany: '70.639.700-0',
+                    role: 'Contador (30 días)',
+                    emissionDate: '26/10/2026',
+                    bank: 'Banco Falabella',
+                    accountType: 'Cta. Cte. N° 10190140888',
+                    imponible: 937676,
+                    discounts: 175908,
+                    liquid: 761768,
+                    breakdown: [
+                        { label: 'Sueldo Base / Total Imponible', amount: 937676, type: 'haber' },
+                        { label: 'AFP PlanVital (11,16%)', amount: -104645, type: 'descuento' },
+                        { label: 'Salud Fonasa (7%)', amount: -65637, type: 'descuento' },
+                        { label: 'Seguro de Cesantía (0,6%)', amount: -5626, type: 'descuento' }
+                    ],
+                    isOfficial: true
+                },
+                {
+                    id: 'liq-2',
+                    company: 'SOCIEDAD COMERCIAL E INMOBILIARIA LA CUMBRE S.A.',
+                    rutCompany: '96.860.520-8',
+                    role: 'Contador (30 días)',
+                    emissionDate: '28/10/2026',
+                    bank: 'Scotiabank Chile',
+                    accountType: 'Cta. Vista N° 971262833',
+                    imponible: 937676,
+                    discounts: 195708,
+                    liquid: 741968,
+                    breakdown: [
+                        { label: 'Sueldo Base / Total Imponible', amount: 937676, type: 'haber' },
+                        { label: 'AFP PlanVital (11,16%)', amount: -104645, type: 'descuento' },
+                        { label: 'Salud Fonasa (7%)', amount: -65637, type: 'descuento' },
+                        { label: 'Seguro de Cesantía (0,6%)', amount: -5626, type: 'descuento' },
+                        { label: 'Seguro Oncológico FALP', amount: -19800, type: 'descuento' }
+                    ],
+                    isOfficial: true
+                }
+            ],
+            expenses: [
+                { id: 'exp-1', name: 'Banco (Comisiones, tarjetas, créditos)', bucket: '70', account: 'Banco Falabella', amount: 0, preset: true },
+                { id: 'exp-2', name: 'Gas', bucket: '70', account: 'Banco Falabella', amount: 0, preset: true },
+                { id: 'exp-3', name: 'Luz (Chilquinta / Electricidad)', bucket: '70', account: 'Banco Falabella', amount: 0, preset: true },
+                { id: 'exp-4', name: 'Agua (Esval / Suministro)', bucket: '70', account: 'Banco Falabella', amount: 0, preset: true },
+                { id: 'exp-5', name: 'Internet Hogar', bucket: '70', account: 'Scotiabank', amount: 0, preset: true },
+                { id: 'exp-6', name: 'Teléfono Móvil', bucket: '70', account: 'Scotiabank', amount: 0, preset: true },
+                { id: 'exp-7', name: 'Supermercado', bucket: '70', account: 'Banco Falabella', amount: 0, preset: true },
+                { id: 'exp-8', name: 'Feria (Frutas y verduras)', bucket: '70', account: 'Efectivo / Débito', amount: 0, preset: true },
+                { id: 'exp-9', name: 'Otros', bucket: '70', account: 'Scotiabank', amount: 0, preset: true }
+            ]
+        };
+
+        let appState = loadState();
+        let currentFilter = 'ALL';
+        let donutChartInstance = null;
+        let barChartInstance = null;
+
+        // ==========================================
+        // 2. UTILIDADES DE FORMATO Y PERSISTENCIA
+        // ==========================================
+        function formatNumberCL(value) {
+            const num = Math.round(Number(value) || 0);
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        function formatCLP(value) {
+            return '$' + formatNumberCL(value);
+        }
+
+        function parseNumberCL(str) {
+            if (typeof str === 'number') return Math.max(0, Math.round(str));
+            const clean = String(str || '').replace(/\D/g, '');
+            return clean ? parseInt(clean, 10) : 0;
+        }
+
+        function formatMoneyInput(inputEl) {
+            const rawDigits = inputEl.value.replace(/\D/g, '');
+            if (!rawDigits) {
+                inputEl.value = '';
+                return 0;
+            }
+            const numericVal = parseInt(rawDigits, 10);
+            inputEl.value = formatNumberCL(numericVal);
+            return numericVal;
+        }
+
+        function loadState() {
+// ... existing code ... -->
+                        <td class="py-3 px-4 text-right">
+                            <div class="inline-flex items-center justify-end bg-slate-50 border border-slate-200 focus-within:border-slate-800 focus-within:bg-white focus-within:ring-2 focus-within:ring-slate-800/10 rounded-xl px-2.5 py-1.5 w-32 sm:w-36">
+                                <span class="text-xs text-slate-400 font-semibold mr-1">$</span>
+                                <input type="text" inputmode="numeric" value="${formatNumberCL(amount)}"
+                                    onfocus="this.select()"
+                                    oninput="updateExpenseAmountLive('${item.id}', this)"
+                                    onblur="finalizeExpenseAmount('${item.id}', this)"
+                                    class="w-full text-right text-sm font-bold text-slate-900 bg-transparent focus:outline-none">
+                            </div>
+                        </td>
+                        <td class="py-3 px-3 text-center">
+        // Actualización en vivo mientras se escribe el monto con separador de miles
+        function updateExpenseAmountLive(id, inputEl) {
+            const item = appState.expenses.find(e => e.id === id);
+            if (!item) return;
+            const numericVal = formatMoneyInput(inputEl);
+            item.amount = numericVal;
+            saveState();
+            updateDashboard();
+
+            // Actualizar subtotal de tabla sin re-renderizar inputs (mantiene el foco y cursor)
+            const filtered = appState.expenses.filter(e => currentFilter === 'ALL' || e.bucket === currentFilter);
+            const subtotal = filtered.reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
+            document.getElementById('table-subtotal').textContent = formatCLP(subtotal);
+        }
+
+        function finalizeExpenseAmount(id, inputEl) {
+            const item = appState.expenses.find(e => e.id === id);
+            if (!item) return;
+            const numericVal = parseNumberCL(inputEl.value);
+            item.amount = numericVal;
+            inputEl.value = formatNumberCL(numericVal);
+            saveState();
+            updateDashboard();
+        }
+
+        function updateExpenseField(id, field, value) {
+// ... existing code ... -->
+            const name = nameInput.value.trim();
+            const bucket = bucketInput.value;
+            const amount = parseNumberCL(amountInput.value);
+
+            if (!name) return;
+// ... existing code ... -->
+                            <div class="text-right">
+                                <span class="text-[11px] font-semibold uppercase text-slate-400 block">Alcance Líquido (Editable)</span>
+                                <div class="inline-flex items-center mt-0.5 bg-emerald-50/70 border border-emerald-200 rounded-lg px-2 py-1">
+                                    <span class="text-sm font-bold text-emerald-700 mr-1">$</span>
+                                    <input type="text" inputmode="numeric" value="${formatNumberCL(inc.liquid)}"
+                                        onfocus="this.select()"
+                                        oninput="formatMoneyInput(this)"
+                                        onchange="updateIncomeLiquid('${inc.id}', this.value)"
+                                        class="w-28 text-right text-base font-extrabold text-emerald-800 bg-transparent focus:outline-none">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ${breakdownHtml}
+                `;
+
+                grid.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        function updateIncomeLiquid(id, val) {
+            const inc = appState.incomes.find(i => i.id === id);
+            if (!inc) return;
+            inc.liquid = parseNumberCL(val);
+            saveState();
+            updateDashboard();
+            showToast('Monto líquido actualizado');
+        }
+
+        function toggleNewIncomeForm() {
+            const panel = document.getElementById('new-income-panel');
+            panel.classList.toggle('hidden');
+        }
+
+        function handleAddIncome(e) {
+            e.preventDefault();
+            const source = document.getElementById('inc-source').value.trim();
+            const bank = document.getElementById('inc-bank').value.trim();
+            const liquid = parseNumberCL(document.getElementById('inc-liquid').value);
+
+            if (!source || liquid <= 0) return;
+// ... existing code ... -->
+        // ==========================================
+        // 8. EXPORTACIÓN EXCEL (.XLSX CON FÓRMULAS) Y PWA
+        // ==========================================
+        function exportExcel() {
+            if (typeof XLSX === 'undefined') {
+                showToast('Error cargando librería Excel, intenta nuevamente', 'warning');
+                return;
+            }
+
+            const wb = XLSX.utils.book_new();
+            const numFmt = '$#,##0';
+
+            // --- HOJA 1: RESUMEN REGLA 70/20/10 ---
+            const totalIncomesRows = appState.incomes.length;
+            const incEndRow = 3 + totalIncomesRows;
+            const totalExpensesRows = appState.expenses.length;
+            const expEndRow = 3 + totalExpensesRows;
+
+            const wsResumenData = [
+                ['PLANIFICADOR DE LIBERTAD FINANCIERA 70 / 20 / 10 — OCTUBRE 2026'],
+                ['Titular: Benjamín Benoni Lara Lara', '', 'Generado:', new Date().toLocaleDateString('es-CL')],
+                [],
+                ['RESUMEN GENERAL', 'Monto (CLP)', 'Porcentaje'],
+                ['Total Ingresos Líquidos', { t: 'n', f: `Ingresos!E${incEndRow + 1}`, z: numFmt }, { t: 'n', v: 1, z: '0.0%' }],
+                ['Total Egresos Asignados', { t: 'n', f: `Egresos!E${expEndRow + 1}`, z: numFmt }, { t: 'n', f: 'B6/B5', z: '0.0%' }],
+                ['Saldo Disponible por Asignar', { t: 'n', f: 'B5-B6', z: numFmt }, { t: 'n', f: 'B7/B5', z: '0.0%' }],
+                [],
+                ['DISTRIBUCIÓN REGLA 70 / 20 / 10', '% Meta', 'Tope / Meta (CLP)', 'Ejecutado Real (CLP)', 'Diferencia / Disponible', '% Cumplimiento'],
+                [
+                    '70% Gastos Fijos (Necesidades)',
+                    { t: 'n', v: 0.70, z: '0%' },
+                    { t: 'n', f: 'ROUND(B5*B10,0)', z: numFmt },
+                    { t: 'n', f: `SUMIF(Egresos!B4:B${expEndRow},"70% Gastos Fijos",Egresos!E4:E${expEndRow})`, z: numFmt },
+                    { t: 'n', f: 'C10-D10', z: numFmt },
+                    { t: 'n', f: 'IF(C10>0,D10/C10,0)', z: '0.0%' }
+                ],
+                [
+                    '20% Gustos (Estilo de Vida)',
+                    { t: 'n', v: 0.20, z: '0%' },
+                    { t: 'n', f: 'ROUND(B5*B11,0)', z: numFmt },
+                    { t: 'n', f: `SUMIF(Egresos!B4:B${expEndRow},"20% Gustos",Egresos!E4:E${expEndRow})`, z: numFmt },
+                    { t: 'n', f: 'C11-D11', z: numFmt },
+                    { t: 'n', f: 'IF(C11>0,D11/C11,0)', z: '0.0%' }
+                ],
+                [
+                    '10% Inversión (Libertad Financiera)',
+                    { t: 'n', v: 0.10, z: '0%' },
+                    { t: 'n', f: 'B5-C10-C11', z: numFmt },
+                    { t: 'n', f: `SUMIF(Egresos!B4:B${expEndRow},"10% Inversión",Egresos!E4:E${expEndRow})`, z: numFmt },
+                    { t: 'n', f: 'C12-D12', z: numFmt },
+                    { t: 'n', f: 'IF(C12>0,D12/C12,0)', z: '0.0%' }
+                ],
+                [
+                    'TOTALES',
+                    { t: 'n', f: 'SUM(B10:B12)', z: '0%' },
+                    { t: 'n', f: 'SUM(C10:C12)', z: numFmt },
+                    { t: 'n', f: 'SUM(D10:D12)', z: numFmt },
+                    { t: 'n', f: 'SUM(E10:E12)', z: numFmt },
+                    ''
+                ]
+            ];
+            const wsResumen = XLSX.utils.aoa_to_sheet(wsResumenData);
+            wsResumen['!cols'] = [{ wch: 36 }, { wch: 16 }, { wch: 20 }, { wch: 22 }, { wch: 22 }, { wch: 16 }];
+            XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen 70-20-10');
+
+            // --- HOJA 2: INGRESOS (LIQUIDACIONES) ---
+            const wsIngresosData = [
+                ['DETALLE DE INGRESOS Y LIQUIDACIONES — OCTUBRE 2026'],
+                [],
+                ['Empleador / Fuente', 'RUT Empresa', 'Banco Destino', 'Cuenta', 'Alcance Líquido (CLP)']
+            ];
+            appState.incomes.forEach(inc => {
+                wsIngresosData.push([
+                    inc.company,
+                    inc.rutCompany || '-',
+                    inc.bank,
+                    inc.accountType,
+                    { t: 'n', v: Number(inc.liquid) || 0, z: numFmt }
+                ]);
+            });
+            wsIngresosData.push([
+                'TOTAL INGRESOS LÍQUIDOS', '', '', '',
+                { t: 'n', f: `SUM(E4:E${incEndRow})`, z: numFmt }
+            ]);
+            const wsIngresos = XLSX.utils.aoa_to_sheet(wsIngresosData);
+            wsIngresos['!cols'] = [{ wch: 46 }, { wch: 15 }, { wch: 20 }, { wch: 26 }, { wch: 22 }];
+            XLSX.utils.book_append_sheet(wb, wsIngresos, 'Ingresos');
+
+            // --- HOJA 3: EGRESOS Y CUENTAS ---
+            const wsEgresosData = [
+                ['PLANILLA DE CUENTAS Y EGRESOS — OCTUBRE 2026'],
+                [],
+                ['Concepto / Cuenta', 'Categoría Regla 70/20/10', 'Cuenta Origen', 'Estado', 'Monto (CLP)']
+            ];
+            appState.expenses.forEach(exp => {
+                const catLabel = exp.bucket === '70' ? '70% Gastos Fijos' : exp.bucket === '20' ? '20% Gustos' : '10% Inversión';
+                const amt = Number(exp.amount) || 0;
+                wsEgresosData.push([
+                    exp.name,
+                    catLabel,
+                    exp.account,
+                    amt > 0 ? 'Asignado' : 'Pendiente',
+                    { t: 'n', v: amt, z: numFmt }
+                ]);
+            });
+            wsEgresosData.push([
+                'TOTAL EGRESOS REGISTRADOS', '', '', '',
+                { t: 'n', f: `SUM(E4:E${expEndRow})`, z: numFmt }
+            ]);
+            const wsEgresos = XLSX.utils.aoa_to_sheet(wsEgresosData);
+            wsEgresos['!cols'] = [{ wch: 38 }, { wch: 24 }, { wch: 20 }, { wch: 14 }, { wch: 18 }];
+            XLSX.utils.book_append_sheet(wb, wsEgresos, 'Egresos');
+
+            XLSX.writeFile(wb, 'Planilla_Finanzas_Benjamin_Lara_Octubre2026.xlsx');
+            showToast('Plantilla Excel (.xlsx) con fórmulas descargada');
+        }
+
+        function exportJSON() {
+            const dataStr = JSON.stringify(appState, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Respaldo_Finanzas_Octubre2026.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Respaldo JSON descargado');
+        }
+
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed && Array.isArray(parsed.incomes) && Array.isArray(parsed.expenses)) {
+                        appState = parsed;
+                        saveState();
+                        renderIncomes();
+                        renderExpensesTable();
+                        updateDashboard();
+                        showToast('Datos restaurados desde respaldo JSON');
+                    } else {
+                        showToast('El archivo JSON no tiene el formato válido', 'warning');
+                    }
+                } catch (err) {
+                    showToast('Error al leer el archivo JSON', 'warning');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function registerPWAManifest() {
+            try {
+                const manifest = {
+                    name: 'Planificador Libertad Financiera 70/20/10',
+                    short_name: 'Finanzas 70/20/10',
+                    start_url: '.',
+                    display: 'standalone',
+                    background_color: '#0f172a',
+                    theme_color: '#0f172a',
+                    icons: [{
+                        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%230f172a'/%3E%3Ctext x='96' y='122' font-family='Arial,sans-serif' font-size='84' font-weight='bold' fill='%2310b981' text-anchor='middle'%3E70%3C/text%3E%3C/svg%3E",
+                        sizes: '192x192',
+                        type: 'image/svg+xml'
+                    }]
+                };
+                const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+                const manifestURL = URL.createObjectURL(blob);
+                const link = document.createElement('link');
+                link.rel = 'manifest';
+                link.href = manifestURL;
+                document.head.appendChild(link);
+            } catch (e) {
+                // Ignorar en entornos restringidos
+            }
+        }
+
+            document.getElementById('table-subtotal').textContent = formatCLP(subtotal);
+            lucide.createIcons();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Actualización en vivo mientras se escribe el monto
+        function updateExpenseAmountLive(id, rawValue) {
+            const item = appState.expenses.find(e => e.id === id);
+            if (!item) return;
+            item.amount = Math.max(0, Math.round(Number(rawValue) || 0));
+            saveState();
+            updateDashboard();
+
+            // Actualizar subtotal de tabla sin re-renderizar inputs (mantiene el foco)
+            const filtered = appState.expenses.filter(e => currentFilter === 'ALL' || e.bucket === currentFilter);
+            const subtotal = filtered.reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
+            document.getElementById('table-subtotal').textContent = formatCLP(subtotal);
+        }
+
+        function finalizeExpenseAmount(id, rawValue) {
+            updateExpenseAmountLive(id, rawValue);
+            renderExpensesTable();
+        }
+
+        function updateExpenseField(id, field, value) {
+            const item = appState.expenses.find(e => e.id === id);
+            if (!item) return;
+            item[field] = value;
+            saveState();
+            renderExpensesTable();
+            updateDashboard();
+            showToast('Movimiento actualizado');
+        }
+
+        function deleteExpense(id) {
+            appState.expenses = appState.expenses.filter(e => e.id !== id);
+            saveState();
+            renderExpensesTable();
+            updateDashboard();
+            showToast('Ítem eliminado', 'warning');
+        }
+
+        function handleAddExpense(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('new-exp-name');
+            const bucketInput = document.getElementById('new-exp-bucket');
+            const amountInput = document.getElementById('new-exp-amount');
+
+            const name = nameInput.value.trim();
+            const bucket = bucketInput.value;
+            const amount = Math.max(0, Math.round(Number(amountInput.value) || 0));
+
+            if (!name) return;
+
+            appState.expenses.push({
+                id: 'exp-' + Date.now(),
+                name,
+                bucket,
+                account: 'Banco Falabella',
+                amount,
+                preset: false
+            });
+
+            nameInput.value = '';
+            amountInput.value = '';
+
+            saveState();
+            renderExpensesTable();
+            updateDashboard();
+            showToast(`"${name}" agregado (${formatCLP(amount)})`);
+        }
+
+        function quickAddPreset(defaultName, bucket) {
+            appState.expenses.push({
+                id: 'exp-' + Date.now(),
+                name: defaultName,
+                bucket: bucket,
+                account: bucket === '10' ? 'Scotiabank' : 'Banco Falabella',
+                amount: 0,
+                preset: false
+            });
+            saveState();
+            setFilter('ALL');
+            showToast(`Fila "${defaultName}" añadida para rellenar`);
+        }
+
+        function quickFocusAdd(bucket) {
+            document.getElementById('new-exp-bucket').value = bucket;
+            const nameInput = document.getElementById('new-exp-name');
+            nameInput.placeholder = bucket === '20' ? 'Ej: Cena, Cine, Ropa...' : 'Ej: Fondo Mutuo, APV, ETF...';
+            nameInput.focus();
+            nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.className = 'filter-btn px-2.5 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 cursor-pointer';
+            });
+            const activeBtn = document.getElementById(`filter-${filter}`);
+            if (activeBtn) {
+                activeBtn.className = 'filter-btn px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-white text-slate-900 shadow-sm cursor-pointer';
+            }
+            renderExpensesTable();
+        }
+
+        // ==========================================
+        // 6. RENDERIZADO DE LIQUIDACIONES E INGRESOS
+        // ==========================================
+        function renderIncomes() {
+            const grid = document.getElementById('incomes-grid');
+            grid.innerHTML = '';
+
+            appState.incomes.forEach(inc => {
+                const card = document.createElement('div');
+                card.className = 'rounded-2xl border border-slate-200 bg-slate-50/60 p-5 flex flex-col justify-between';
+
+                let breakdownHtml = '';
+                if (inc.breakdown && inc.breakdown.length > 0) {
+                    breakdownHtml = `
+                        <details class="mt-4 group">
+                            <summary class="text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer flex items-center gap-1.5 select-none">
+                                <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-open:rotate-180"></i>
+                                Ver desglose de haberes y descuentos legales
+                            </summary>
+                            <div class="mt-3 pt-3 border-t border-slate-200/80 space-y-1.5 text-xs">
+                                ${inc.breakdown.map(b => `
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-slate-600">${b.label}</span>
+                                        <span class="font-medium ${b.amount >= 0 ? 'text-slate-800' : 'text-rose-600'}">
+                                            ${b.amount >= 0 ? formatCLP(b.amount) : '-' + formatCLP(Math.abs(b.amount))}
+                                        </span>
+                                    </div>
+                                `).join('')}
+                                <div class="flex justify-between items-center pt-1.5 border-t border-slate-200 font-bold text-slate-900">
+                                    <span>Total Descuentos Legales</span>
+                                    <span class="text-rose-600">-${formatCLP(inc.discounts)}</span>
+                                </div>
+                            </div>
+                        </details>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-200/80 text-slate-700 mb-1.5">
+                                    ${inc.isOfficial ? 'Liquidación Oficial • ' + inc.emissionDate : 'Ingreso Adicional'}
+                                </span>
+                                <h3 class="text-sm sm:text-base font-bold text-slate-900 leading-snug">${escapeHtml(inc.company)}</h3>
+                                <p class="text-xs text-slate-500 mt-0.5">${inc.role ? escapeHtml(inc.role) + ' • ' : ''}RUT: ${escapeHtml(inc.rutCompany || 'N/A')}</p>
+                            </div>
+                            ${!inc.isOfficial ? `
+                                <button onclick="deleteIncome('${inc.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg cursor-pointer" title="Eliminar ingreso">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+
+                        <div class="mt-4 p-3.5 bg-white rounded-xl border border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <span class="text-[11px] font-semibold uppercase text-slate-400 block">Depósito Bancario</span>
+                                <span class="text-xs font-bold text-slate-800 flex items-center gap-1 mt-0.5">
+                                    <i data-lucide="landmark" class="w-3.5 h-3.5 text-emerald-600"></i>
+                                    ${escapeHtml(inc.bank)}
+                                </span>
+                                <span class="text-[11px] text-slate-500">${escapeHtml(inc.accountType)}</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[11px] font-semibold uppercase text-slate-400 block">Alcance Líquido (Editable)</span>
+                                <div class="inline-flex items-center mt-0.5 bg-emerald-50/70 border border-emerald-200 rounded-lg px-2 py-1">
+                                    <span class="text-sm font-bold text-emerald-700 mr-1">$</span>
+                                    <input type="number" min="0" value="${inc.liquid}"
+                                        onchange="updateIncomeLiquid('${inc.id}', this.value)"
+                                        class="w-24 text-right text-base font-extrabold text-emerald-800 bg-transparent focus:outline-none">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ${breakdownHtml}
+                `;
+
+                grid.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        function updateIncomeLiquid(id, val) {
+            const inc = appState.incomes.find(i => i.id === id);
+            if (!inc) return;
+            inc.liquid = Math.max(0, Math.round(Number(val) || 0));
+            saveState();
+            updateDashboard();
+            showToast('Monto líquido actualizado');
+        }
+
+        function toggleNewIncomeForm() {
+            const panel = document.getElementById('new-income-panel');
+            panel.classList.toggle('hidden');
+        }
+
+        function handleAddIncome(e) {
+            e.preventDefault();
+            const source = document.getElementById('inc-source').value.trim();
+            const bank = document.getElementById('inc-bank').value.trim();
+            const liquid = Math.max(0, Math.round(Number(document.getElementById('inc-liquid').value) || 0));
+
+            if (!source || liquid <= 0) return;
+
+            appState.incomes.push({
+                id: 'inc-' + Date.now(),
+                company: source.toUpperCase(),
+                rutCompany: 'Extra',
+                role: 'Ingreso Complementario',
+                emissionDate: 'Octubre 2026',
+                bank: bank,
+                accountType: 'Depósito Directo',
+                imponible: liquid,
+                discounts: 0,
+                liquid: liquid,
+                breakdown: [],
+                isOfficial: false
+            });
+
+            document.getElementById('inc-source').value = '';
+            document.getElementById('inc-bank').value = '';
+            document.getElementById('inc-liquid').value = '';
+            toggleNewIncomeForm();
+
+            saveState();
+            renderIncomes();
+            updateDashboard();
+            showToast(`Ingreso "${source}" agregado`);
+        }
+
+        function deleteIncome(id) {
+            appState.incomes = appState.incomes.filter(i => i.id !== id);
+            saveState();
+            renderIncomes();
+            updateDashboard();
+            showToast('Ingreso eliminado', 'warning');
+        }
+
+        // ==========================================
+        // 7. GRÁFICOS INTERACTIVOS (CHART.JS)
+        // ==========================================
+        function initCharts() {
+            const ctxDonut = document.getElementById('donutChart').getContext('2d');
+            donutChartInstance = new Chart(ctxDonut, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Gastos Fijos (70%)', 'Gustos (20%)', 'Inversión (10%)', 'Saldo Sin Asignar'],
+                    datasets: [{
+                        data: [0, 0, 0, 1503736],
+                        backgroundColor: ['#0f172a', '#f59e0b', '#10b981', '#e2e8f0'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '66%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 14,
+                                font: { family: 'Inter', size: 11, weight: '500' }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.raw || 0;
+                                    return ` ${context.label}: ${formatCLP(val)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const ctxBar = document.getElementById('barChart').getContext('2d');
+            barChartInstance = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: ['Gastos Fijos (70%)', 'Gustos (20%)', 'Inversión (10%)'],
+                    datasets: [
+                        {
+                            label: 'Meta Regla 70/20/10',
+                            data: [1052615, 300747, 150374],
+                            backgroundColor: '#cbd5e1',
+                            borderRadius: 8,
+                            barPercentage: 0.65
+                        },
+                        {
+                            label: 'Ejecutado Real',
+                            data: [0, 0, 0],
+                            backgroundColor: ['#0f172a', '#f59e0b', '#10b981'],
+                            borderRadius: 8,
+                            barPercentage: 0.65
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9' },
+                            ticks: {
+                                font: { family: 'Inter', size: 10 },
+                                callback: function(value) {
+                                    return '$' + (value / 1000).toLocaleString('es-CL') + 'k';
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Inter', size: 11, weight: '600' } }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 14,
+                                font: { family: 'Inter', size: 11 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.dataset.label}: ${formatCLP(context.raw)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCharts(m) {
+            if (!donutChartInstance || !barChartInstance) return;
+
+            const unassigned = Math.max(0, m.remaining);
+            donutChartInstance.data.datasets[0].data = [m.spent70, m.spent20, m.spent10, unassigned];
+            donutChartInstance.update();
+
+            barChartInstance.data.datasets[0].data = [m.target70, m.target20, m.target10];
+            barChartInstance.data.datasets[1].data = [m.spent70, m.spent20, m.spent10];
+            barChartInstance.update();
+        }
+
+        // ==========================================
+        // 8. EXPORTACIÓN Y REINICIO DE DATOS
+        // ==========================================
+        function exportCSV() {
+            const m = calculateMetrics();
+            let csv = 'Tipo,Concepto,Categoria Regla 70/20/10,Cuenta Bancaria,Monto CLP\n';
+
+            appState.incomes.forEach(inc => {
+                csv += `Ingreso,"${inc.company.replace(/"/g, '""')}",Ingreso Liquido,"${inc.bank}",${inc.liquid}\n`;
+            });
+
+            appState.expenses.forEach(exp => {
+                const catLabel = exp.bucket === '70' ? '70% Gastos Fijos' : exp.bucket === '20' ? '20% Gustos' : '10% Inversion';
+                csv += `Egreso,"${exp.name.replace(/"/g, '""')}","${catLabel}","${exp.account}",${exp.amount}\n`;
+            });
+
+            csv += `\nRESUMEN,,,Total Ingresos,${m.totalIncome}\n`;
+            csv += `RESUMEN,,,Total Egresos,${m.totalExpenses}\n`;
+            csv += `RESUMEN,,,Saldo Disponible,${m.remaining}\n`;
+
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Finanzas_Benjamin_Lara_Octubre2026.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Archivo CSV descargado correctamente');
+        }
+
+        function exportJSON() {
+            const dataStr = JSON.stringify(appState, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Respaldo_Finanzas_Octubre2026.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Respaldo JSON descargado');
+        }
+
+        function openResetModal() {
+            const modal = document.getElementById('reset-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeResetModal() {
+            const modal = document.getElementById('reset-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function confirmResetData() {
+            appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+            saveState();
+            closeResetModal();
+            renderIncomes();
+            renderExpensesTable();
+            updateDashboard();
+            showToast('Planilla reiniciada a valores originales', 'warning');
+        }
+
+        // ==========================================
+        // 9. INICIALIZACIÓN DE LA APLICACIÓN
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            registerPWAManifest();
+            initCharts();
+            renderIncomes();
+            renderExpensesTable();
+            updateDashboard();
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
